@@ -1,0 +1,37 @@
+---
+# Ansible Playbook to upload new Cisco IOS
+# Only upload file if the current IOS version is different
+
+- name: Upload new CISCO IOS files
+  hosts: pl-gd-wlc.ciklum.net
+  gather_facts: false
+  connection: network_cli
+
+  vars:
+    upgrade_ios_version: 17.03.03
+    new_ios_file_name: C9800-L-universalk9_wlc.17.03.03.SPA.bin
+
+
+  tasks:
+    - name: Check current version
+      ios_facts:
+
+    - debug:
+        msg:
+        - "Current version is {{ ansible_net_version }}"
+        - "Upgrade image is 17.03.03"
+
+    - debug:
+        msg:
+        - "New IOS and current IOS are different."
+ 
+      when: ansible_net_version != upgrade_ios_version
+ 
+    - name: Copy new IOS from SRV NOC
+      cli_command:
+         command: 'copy scp://noc:N0cFtp1@192.168.200.55//home/noc/FirmWare/9800/{{ new_ios_file_name }} flash:{{ new_ios_file_name }}'
+         check_all: True
+         prompt: 'Destination filename'
+         answer: '{{ new_ios_file_name }}'
+      vars:
+         ansible_command_timeout: 7200
